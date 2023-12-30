@@ -247,7 +247,7 @@ fi
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 ########### General Alias Configuration #############
-alias ll='ls -l'
+alias ll='ls -la'
 alias la='ls -A'
 alias l='ls -CF'
 alias f='find .'
