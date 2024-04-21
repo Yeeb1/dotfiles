@@ -308,7 +308,7 @@ function dockershellhere() {
 }
 ffuf_vhost() {
     if [ "$#" -ne 3 ]; then
-        echo "Usage: ffuf_vhost <http|https> <domain> <fs>"
+        echo "[i] Usage: ffuf_vhost <http|https> <domain> <fs>"
         return 1
     fi
 
@@ -317,7 +317,7 @@ ffuf_vhost() {
     fs_value=$3
 
     if [ "$protocol" != "http" ] && [ "$protocol" != "https" ]; then
-        echo "Invalid protocol. Use 'http' or 'https'."
+        echo "[i] Invalid protocol. Use 'http' or 'https'."
         return 1
     fi
 
@@ -325,7 +325,7 @@ ffuf_vhost() {
 }
 ffuf_vhost_fast() {
     if [ "$#" -ne 3 ]; then
-        echo "Usage: ffuf_vhost <http|https> <domain> <fs>"
+        echo "[i] Usage: ffuf_vhost_fast <http|https> <domain> <fs>"
         return 1
     fi
 
@@ -334,7 +334,7 @@ ffuf_vhost_fast() {
     fs_value=$3
 
     if [ "$protocol" != "http" ] && [ "$protocol" != "https" ]; then
-        echo "Invalid protocol. Use 'http' or 'https'."
+        echo "[i] Invalid protocol. Use 'http' or 'https'."
         return 1
     fi
 
@@ -369,6 +369,16 @@ nmap_udp() {
       sudo nmap -sUCV -T4 --min-rate 10000 "${@}" -v -oA nmap/udp_default
   fi
 }
+function crawl() {
+    if [[ -z "$1" ]]; then
+        echo "[i] Usage: crawl <URL>"
+        echo "[i] Example: crawl http://example.com"
+        return 1
+    fi
+    echo "[i] Crawling subdomains for: $1"
+    gospider -s $1 -d 5 -t 10 --include-subs -o files | awk '/^\[subdomains\]/ { print "\033[1;31m" $0 "\033[0m" } !/^\[subdomains\]/ { print }'
+}
+
 ########### Custom Functions #############
 
 ########### PATH Environment Configuration #############
