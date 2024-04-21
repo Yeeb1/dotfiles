@@ -90,8 +90,8 @@ if [ -n "$force_color_prompt" ]; then
 fi
 
 configure_prompt() {
-    prompt_symbol=😈
-    [ "$EUID" -eq 0 ] && prompt_symbol=💀
+    prompt_symbol=
+    [ "$EUID" -eq 0 ] && prompt_symbol=
     case "$PROMPT_ALTERNATIVE" in
         twoline)
             PROMPT=$'\033[01;30m[`date  +"%d-%b-%y %T %Z"`]\e[0m\n%F{%(#.blue.green)}┌──${debian_chroot:+($debian_chroot)─}${VIRTUAL_ENV:+($(basename $VIRTUAL_ENV))─}(%B%F{%(#.red.blue)}%n$prompt_symbol%m%b%F{%(#.blue.green)})-[%B%F{reset}%(6~.%-1~/…/%4~.%5~)%b%F{%(#.blue.green)}]\n└─%B%(#.%F{red}#.%F{blue}$)%b%F{reset} '
@@ -220,6 +220,9 @@ if [ -x /usr/bin/dircolors ]; then
     alias diff='diff --color=auto'
     alias ip='ip --color=auto'
 
+    alias boxip="tmux setenv IP "
+    alias box="tmux show-environment | grep IP | cut -d '=' -f2"
+
     export LESS_TERMCAP_mb=$'\E[1;31m'     # begin blink
     export LESS_TERMCAP_md=$'\E[1;36m'     # begin bold
     export LESS_TERMCAP_me=$'\E[0m'        # reset bold/blink
@@ -247,10 +250,12 @@ fi
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 ########### General Alias Configuration #############
-alias ll='ls -la'
-alias la='ls -A'
-alias l='ls -CF'
+alias ls='lsd'
+alias ll='lsd -la'
+alias la='lsd -A'
+alias l='lsd -CF'
 alias f='find .'
+alias t='tree .'
 alias xc="xclip -selection clipboard"
 ########### General Alias Configuration #############
 
@@ -260,7 +265,8 @@ alias dockershell="sudo docker run --rm -i -t --entrypoint=/bin/bash"
 alias dockershellsh="sudo docker run --rm -i -t --entrypoint=/bin/sh"
 alias ntlm.pw='function _ntlm(){ curl https://ntlm.pw/$1; }; _ntlm'
 alias bat="batcat"
-alias peas='wget https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh'
+alias peas='wget https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh -O p'
+alias mkctf='mkdir files serve loot tools'
 ########### General CTF Aliases #############
 
 ########### HTB Aliases #############
@@ -300,6 +306,69 @@ function dockershellhere() {
     dirname=${PWD##*/}
     sudo docker run --rm -it --entrypoint=/bin/bash -v `pwd`:/${dirname} -w /${dirname} "$@"
 }
+ffuf_vhost() {
+    if [ "$#" -ne 3 ]; then
+        echo "Usage: ffuf_vhost <http|https> <domain> <fs>"
+        return 1
+    fi
+
+    protocol=$1
+    domain=$2
+    fs_value=$3
+
+    if [ "$protocol" != "http" ] && [ "$protocol" != "https" ]; then
+        echo "Invalid protocol. Use 'http' or 'https'."
+        return 1
+    fi
+
+    ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/dns-Jhaddix.txt -H "Host: FUZZ.$domain" -u $protocol://$domain -fs $fs_value
+}
+ffuf_vhost_fast() {
+    if [ "$#" -ne 3 ]; then
+        echo "Usage: ffuf_vhost <http|https> <domain> <fs>"
+        return 1
+    fi
+
+    protocol=$1
+    domain=$2
+    fs_value=$3
+
+    if [ "$protocol" != "http" ] && [ "$protocol" != "https" ]; then
+        echo "Invalid protocol. Use 'http' or 'https'."
+        return 1
+    fi
+
+    ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt -H "Host: FUZZ.$domain" -u $protocol://$domain -fs $fs_value
+}
+rock_john() {
+  if [ $# -eq 0 ]
+    then
+      echo "[i] Usage: rock_john [hash] (options)"
+    else
+      john "${@}" --wordlist=/usr/share/wordlists/rockyou.txt
+  fi
+}
+ips() {
+  ip a show scope global | awk '/^[0-9]+:/ { sub(/:/,"",$2); iface=$2 } /^[[:space:]]*inet / { split($2, a, "/"); print "[\033[96m" iface"\033[0m] "a[1] }'
+}
+nmap_default() {
+  if [ $# -eq 0 ]
+    then
+      echo "[i] Usage: nmap_default ip (options)"
+    else
+      [ ! -d "./nmap" ] && echo "[i] Creating $(pwd)/nmap..." && mkdir nmap
+      sudo nmap -sCV -T4 --min-rate 10000 "${@}" -v -oA nmap/tcp_default
+  fi
+}
+nmap_udp() {
+  if [ $# -eq 0 ]
+    then
+      echo "[i] Usage: nmap_udp ip (options)"
+    else
+      [ ! -d "./nmap" ] && echo "[i] Creating $(pwd)/nmap..." && mkdir nmap
+      sudo nmap -sUCV -T4 --min-rate 10000 "${@}" -v -oA nmap/udp_default
+  fi
+}
 ########### Custom Functions #############
 
 ########### PATH Environment Configuration #############
@@ -307,3 +376,4 @@ export PATH="$PATH:/home/kali/.local/bin"
 export PATH="$PATH:/home/kali/.cargo/bin"
 export PATH="$PATH:/snap/bin"
 export PATH="$PATH:/home/kali/go/bin"
+source ~/.env
